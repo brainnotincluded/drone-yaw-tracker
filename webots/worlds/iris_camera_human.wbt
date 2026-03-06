@@ -1,0 +1,72 @@
+#VRML_SIM R2023b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/floors/protos/Floor.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/appearances/protos/Grass.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/tables/protos/Table.proto"
+EXTERNPROTO "../protos/Iris.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/humans/pedestrian/protos/Pedestrian.proto"
+
+WorldInfo {
+  title "Iris Ardupilot - Fast Training"
+  basicTimeStep 2
+  FPS 0
+}
+Viewpoint {
+  orientation 0.1 -0.88 -0.47 5.76
+  position -2.5 -5.4 9.0
+  follow "Iris"
+  followSmoothness 0.01
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+DEF PEDESTRIAN Pedestrian {
+  translation 20 5 1.27
+  rotation 0 0 1 0
+  controllerArgs [
+    "--trajectory"
+    "20.0 5.0, 22.1 7.0, 24.0 8.5, 25.7 9.0, 26.9 8.5, 27.7 7.0, 28.0 5.0, 27.7 3.0, 26.9 1.5, 25.7 1.0, 24.0 1.5, 22.1 3.0, 20.0 5.0, 17.9 7.0, 16.0 8.5, 14.3 9.0, 13.1 8.5, 12.3 7.0, 12.0 5.0, 12.3 3.0, 13.1 1.5, 14.3 1.0, 16.0 1.5, 17.9 3.0"
+    "--speed"
+    "0.7"
+  ]
+}
+Floor {
+  size 300 100
+  appearance Grass {
+  }
+}
+Table {
+  translation 0 0.92 0
+}
+DEF DRONE Iris {
+  translation 0 1.44 0.795
+  rotation 0 0 1 0
+  controller "ardupilot_vehicle_controller"
+  controllerArgs [
+    "--motors"
+    "m1_motor, m2_motor, m3_motor, m4_motor"
+    "--camera"
+    "camera"
+    "--camera-port"
+    "5599"
+    "--camera-fps"
+    "30"
+  ]
+  extensionSlot [
+    Camera {
+      translation 0.05 0 0.05
+      rotation 0 0 0 0
+      fieldOfView 1.2
+      width 640
+      height 640
+    }
+  ]
+}
+Robot {
+  name "pedestrian_supervisor"
+  controller "pedestrian_supervisor"
+  supervisor TRUE
+}

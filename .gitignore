@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+dist/
+build/
+*.mp4
+*.zip
+!models/.gitkeep
+tb_logs/
+*.log
+.DS_Store
+venv/
+.env

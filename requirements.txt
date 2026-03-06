@@ -1,0 +1,5 @@
+pymavlink>=2.4.40
+opencv-python>=4.8
+numpy>=1.24
+gymnasium>=0.29
+stable-baselines3>=2.1
