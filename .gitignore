@@ -1,0 +1,23 @@
+# Videos
+*.mp4
+
+# Data/logs
+*.csv
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.eggs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Claude
+.claude/
