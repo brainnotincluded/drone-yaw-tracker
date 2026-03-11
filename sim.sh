@@ -15,7 +15,7 @@ sleep 2
 fuser -k 5760/tcp 2>/dev/null || true
 
 echo "=== Clearing Webots cache ==="
-rm -f /tmp/webots*
+rm -rf /tmp/webots*
 
 echo "=== Starting Webots ==="
 export DISPLAY=:99
@@ -28,7 +28,7 @@ echo "=== Starting ArduCopter SITL ==="
 cd ~/ardupilot
 nohup Tools/autotest/sim_vehicle.py -v ArduCopter -f webots-python \
     --add-param-file=libraries/SITL/examples/Webots_Python/params/iris.parm \
-    --no-rebuild --no-mavproxy > /tmp/ardu.log 2>&1 &
+    --speedup 2 --no-rebuild --no-mavproxy > /tmp/ardu.log 2>&1 &
 echo "ArduCopter PID=$! — waiting 10s..."
 sleep 10
 

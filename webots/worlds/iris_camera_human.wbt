@@ -10,7 +10,7 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 
 WorldInfo {
   title "Iris Ardupilot - Fast Training"
-  basicTimeStep 2
+  basicTimeStep 4
   FPS 0
   defaultDamping Damping {
     linear 0.3

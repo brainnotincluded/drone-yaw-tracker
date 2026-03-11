@@ -58,14 +58,19 @@ class DroneTrackEnv(gymnasium.Env):
     metadata = {"render_modes": []}
 
     def __init__(self, mav, pos_client, telemetry, rc_loop,
-                 control_freq=50, episode_steps=1500):
+                 control_freq=50, episode_steps=1500, sim_speedup=1.0):
         super().__init__()
         self.mav = mav
         self.pos_client = pos_client
         self.telemetry = telemetry
         self.rc = rc_loop
-        self.control_dt = 1.0 / control_freq
+        self.control_dt = 1.0 / control_freq / sim_speedup  # scale sleep for sim speed
         self.max_steps = episode_steps
+        self.sim_speedup = sim_speedup
+
+    def _sleep(self, secs):
+        """Sleep scaled by sim speedup."""
+        time.sleep(secs / self.sim_speedup)
 
         self.observation_space = spaces.Box(
             low=-1.0, high=1.0, shape=(OBS_DIM,), dtype=np.float32)
@@ -234,10 +239,10 @@ class DroneTrackEnv(gymnasium.Env):
             if not drone.wait_for_altitude(self.mav, 5.0, tolerance=0.5, timeout=30):
                 raise RuntimeError("Failed to reach 5m")
             drone.set_loiter(self.mav)
-            time.sleep(1)
+            self._sleep(1)
         else:
             drone.set_guided(self.mav)
-            time.sleep(0.3)
+            self._sleep(0.3)
             drone.goto_home(self.mav, alt=5.0, timeout=40)
 
             pos_dbg2 = self.pos_client.get()
@@ -245,14 +250,14 @@ class DroneTrackEnv(gymnasium.Env):
                 print(f"  [goto_home done] drone=({pos_dbg2.drone_x:.1f},{pos_dbg2.drone_y:.1f})", flush=True)
 
             drone.set_loiter(self.mav)
-            time.sleep(0.3)
+            self._sleep(0.3)
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
 
         # Center roll/yaw
         self.rc.center_all()
-        time.sleep(0.1)
+        self._sleep(0.1)
 
         # Log position before reset for debugging
         telem_dbg = self.telemetry.get()
@@ -268,16 +273,16 @@ class DroneTrackEnv(gymnasium.Env):
             except Exception as e:
                 print(f"  [!] Reset attempt {attempt+1} failed: {e}", flush=True)
                 self.rc.center_all()
-                time.sleep(2)
+                self._sleep(2)
                 if attempt == 2:
                     print("  [!] All reset attempts failed, forcing re-arm", flush=True)
                     drone.set_guided(self.mav)
-                    time.sleep(1)
+                    self._sleep(1)
                     drone.arm(self.mav, timeout=15)
                     drone.takeoff(self.mav, 5.0)
                     drone.wait_for_altitude(self.mav, 5.0, tolerance=1.0, timeout=30)
                     drone.set_loiter(self.mav)
-                    time.sleep(1)
+                    self._sleep(1)
 
         sys.stdout.flush()
 
@@ -285,9 +290,9 @@ class DroneTrackEnv(gymnasium.Env):
         # Smaller offset = less time wasted in "search" mode, more time tracking
         random_yaw_pwm = int(1500 + self.np_random.uniform(-150, 150))
         self.rc.set_yaw(random_yaw_pwm)
-        time.sleep(0.3)
+        self._sleep(0.3)
         self.rc.set_yaw(1500)
-        time.sleep(0.2)
+        self._sleep(0.2)
 
         # ===== Domain Randomization CURRICULUM =====
         # Phase 1 (ep 0-19): No DR — learn basic tracking on default dynamics
@@ -509,6 +514,8 @@ def main():
     parser.add_argument("--lr", type=float, default=3e-4)
     parser.add_argument("--save-dir", type=str, default="rl_models_v5")
     parser.add_argument("--resume", type=str, default=None)
+    parser.add_argument("--sim-speedup", type=float, default=1.0,
+                        help="Sim speedup factor (match ArduCopter --speedup). Scales sleep time.")
     args = parser.parse_args()
 
     os.makedirs(args.save_dir, exist_ok=True)
@@ -552,7 +559,8 @@ def main():
     env = DroneTrackEnv(
         mav, pos_client, telemetry, rc_loop,
         control_freq=args.control_freq,
-        episode_steps=args.episode_steps)
+        episode_steps=args.episode_steps,
+        sim_speedup=args.sim_speedup)
 
     model_path = os.path.join(args.save_dir, "sac_loiter")
     log_path = os.path.join(args.save_dir, "training_log.csv")
@@ -595,7 +603,7 @@ def main():
     print(f"  Obs space:  {OBS_DIM}D ({HISTORY} × {STATE_DIM})")
     print(f"  Network:    MLP [256, 512, 256] | lr={args.lr}")
     print(f"  Buffer:     300k | batch=256 | grad_steps=4")
-    print(f"  Rate limit: 0.20/step (50Hz)")
+    print(f"  Rate limit: 0.20/step (50Hz) | sim_speedup={args.sim_speedup}x")
     print(f"  Reward:     5-tier Gaussian (σ=15,5,2,0.8,0.3)")
     print(f"  DR curriculum:")
     print(f"    EP 0-19:   No DR (learn basic tracking)")
