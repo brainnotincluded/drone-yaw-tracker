@@ -68,10 +68,6 @@ class DroneTrackEnv(gymnasium.Env):
         self.max_steps = episode_steps
         self.sim_speedup = sim_speedup
 
-    def _sleep(self, secs):
-        """Sleep scaled by sim speedup."""
-        time.sleep(secs / self.sim_speedup)
-
         self.observation_space = spaces.Box(
             low=-1.0, high=1.0, shape=(OBS_DIM,), dtype=np.float32)
         self.action_space = spaces.Box(
@@ -107,6 +103,10 @@ class DroneTrackEnv(gymnasium.Env):
         # Lock-on tracking
         self.locked_on = False
         self.locked_errors = []
+
+    def _sleep(self, secs):
+        """Sleep scaled by sim speedup."""
+        time.sleep(secs / self.sim_speedup)
 
     def _get_state(self):
         """Get current 10D state vector + position info."""

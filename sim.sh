@@ -28,7 +28,7 @@ echo "=== Starting ArduCopter SITL ==="
 cd ~/ardupilot
 nohup Tools/autotest/sim_vehicle.py -v ArduCopter -f webots-python \
     --add-param-file=libraries/SITL/examples/Webots_Python/params/iris.parm \
-    --speedup 2 --no-rebuild --no-mavproxy > /tmp/ardu.log 2>&1 &
+    --no-rebuild --no-mavproxy > /tmp/ardu.log 2>&1 &
 echo "ArduCopter PID=$! — waiting 10s..."
 sleep 10
 
