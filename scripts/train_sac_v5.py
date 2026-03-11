@@ -476,7 +476,8 @@ class TrackingCallback(BaseCallback):
 
                 marker = ""
                 # Save best model by locked_avg for no-dist episodes
-                if not is_dist and l_avg >= 0 and l_avg < self.best_lock_error:
+                # Don't overwrite with models worse than 5° (protects good checkpoints on resume)
+                if not is_dist and l_avg >= 0 and l_avg < self.best_lock_error and l_avg < 5.0:
                     self.best_lock_error = l_avg
                     self.model.save(self.save_path + "_best")
                     marker = " *BEST*"
@@ -572,7 +573,7 @@ def main():
         model.target_entropy = -2.0
         model.gradient_steps = 4
         model.batch_size = 256
-        model.learning_starts = 1  # no warmup for resumed model
+        model.learning_starts = 256  # = batch_size, enough for one meaningful gradient step
         print(f"[*] Set target_entropy={model.target_entropy} gradient_steps={model.gradient_steps}")
     else:
         model = SAC(
